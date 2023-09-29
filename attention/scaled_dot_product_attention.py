@@ -9,6 +9,7 @@ See: https://paperswithcode.com/method/scaled
 """
 
 from typing import Optional
+from packaging import version
 
 import torch
 import torch.nn as nn
@@ -57,3 +58,27 @@ def scaled_dot_product_attention(
     output = score @ V
     
     return output
+    
+
+class ScaledDotProductAttention(nn.Modlue):
+    """Scaled Dot-product Attention."""
+
+    def __init__(self) -> None:
+        super().__init__()
+    
+    def forward(
+        query: torch.Tensor, 
+        key: torch.Tensor, 
+        value: torch.Tensor, 
+        mask: Optional[torch.Tensor] = None, 
+        dropout_probability: float = 0.0, 
+        is_causal: bool = False,
+    ) -> torch.Tensor
+
+        return scaled_dot_product_attention(
+            query, 
+            key, 
+            mask, 
+            dropout_probability, 
+            is_causal,
+        )
