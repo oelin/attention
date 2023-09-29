@@ -73,7 +73,7 @@ class ScaledDotProductAttention(nn.Modlue):
         mask: Optional[torch.Tensor] = None, 
         dropout_probability: float = 0.0, 
         is_causal: bool = False,
-    ) -> torch.Tensor
+    ) -> torch.Tensor:
 
         return scaled_dot_product_attention(
             query, 
