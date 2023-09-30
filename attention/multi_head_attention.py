@@ -32,8 +32,8 @@ def multi_head_attention(
     score: torch.Tensor - attention score of shape (B, N, T, S).
     value: torch.Tensor - attention value of shape (B, T, VD).
 
-    Example
-    -------
+    Examples
+    --------
 
     >>> Q = torch.randn(5, 10, 15)
     >>> K = torch.randn(5, 20, 15)
