@@ -53,7 +53,6 @@ def multi_head_attention(
     S - source sequence length.
     QD - query dimension.
     VD - value dimension.
-    HD - head dimension.
     ED - embedding dimension.
     """
 
