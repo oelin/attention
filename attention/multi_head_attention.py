@@ -1,57 +1,85 @@
-from typing import Optional
+def multi_head_attention(
+    Q: torch.Tensor,
+    K: torch.Tensor,
+    V: torch.Tensor,
+    WQ: torch.Tensor,
+    WK: torch.Tensor,
+    WV: torch.Tensor,
+    W0: torch.Tensor,
+    mask: torch.Tensor,
+    embedding_dimension: int,
+    number_of_heads: int,
+) -> Tuple[torch.Tensor, torch.Tensor]:
+    """Multi-head (scaled dot-product) attention.
 
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
+    Parameters
+    ----------
 
-from attention.scaled_dot_product_attention import scaled_dot_product_attention, ScaledDotProductAttention
+    Q: torch.Tensor - Query tensor of shape (B, T, QD).
+    K: torch.Tensor - Key tensor of shape (B, S, QD).
+    V: torch.Tensor - Value tensor of shape (B, S, VD).
+    WQ: torch.Tensor - Query projection tensor of shape (ED, QD).
+    WK: torch.Tensor - Key projection tensor of shape (ED, ED).
+    WV: torch.Tensor - Value projection tensor of shape (ED, VD).
+    W0: torch.Tensor - Output projection tensor of shape (ED, ED).
+    mask: torch.Tensor - Mask tensor of shape (T, S).
+    embedding_dimension: int - Embedding dimension.
+    number_of_heads: int - Number of heads.
 
+    Returns
+    -------
 
-class SlowMultiHeadAttention(nn.Module):
-    """Slow multi-head attention. 
+    score: torch.Tensor - attention score of shape (B, N, T, S).
+    value: torch.Tensor - attention value of shape (B, T, VD).
 
-    Uses `number_of_heads` ScaledDotProductAttention layers to compute the output
-    of each head, then concatenates them.
+    Example
+    -------
+
+    >>> Q = torch.randn(5, 10, 15)
+    >>> K = torch.randn(5, 20, 15)
+    >>> V = torch.randn(5, 20, 25)
+    >>> WQ = torch.randn(15, 15)
+    >>> WK = torch.randn(15, 15)
+    >>> WV = torch.randn(25, 15)
+    >>> W0 = torch.randn(15, 15)
+    >>> mask = torch.ones((10, 20))
+    >>> score, value = multi_head_attention(Q, K, V, WQ, WK, WV, W0, mask, 3)
+
+    Aliases
+    -------
+
+    B - batch size.
+    T - target sequence length.
+    S - source sequence length.
+    QD - query dimension.
+    VD - value dimension.
+    HD - head dimension.
+    ED - embedding dimension.
+    N - number of heads (must divide ED).
     """
     
-    def __init__(
-        self, 
-        number_of_heads: int, 
-        head_dimension: int, 
-        output_dimension: int,
-    ) -> None:
-        super().__init__()
+    batch_size, target_sequence_length, query_dimension = Q.size()
+    batch_size, source_sequence_length, key_dimension = K.size()
+    batch_size, source_sequence_length, value_dimension = V.size()
 
-        self.linear_output = nn.Linear(
-            head_dimension * number_of_heads, 
-            output_dimension, 
-            bias=False,
-        )
-        
-        self.heads = nn.ModuleList([
-            ScaledDotProductAttention(
-                query_dimension=head_dimension, 
-                value_dimension=head_dimension,
-            )
+    Q = Q @ WQ.T  
+    K = K @ WK.T
+    V = V @ WV.T
 
-            for _ in range(number_of_heads)
-        ])
+    Q = Q.view(batch_size, number_of_heads, target_sequence_length, embedding_dimension // number_of_heads)
+    K = K.view(batch_size, number_of_heads, source_sequence_length, embedding_dimension // number_of_heads)
+    V = V.view(batch_size, number_of_heads, source_sequence_length, embedding_dimension // number_of_heads)
 
-    def forward(
-        self, 
-        query: torch.Tensor, 
-        key: torch.Tensor,
-        value: torch.Tensor,
-        mask: Optional[torch.Tensor] = None,
-    ) -> torch.Tensor:
+    value, score = scaled_dot_product_attention(Q, K, V, mask)
 
-        x = torch.cat([head(query, key, value, mask) for head in self.heads], dim=-1)
-        x = self.linear_output(x)
-
-        return x
+    return value, score
 
 
-class MultiHeadAttention(nn.Module):
-    """Efficient multi-head attention."""
+    #Q = Q.view(batch_size, number_of_heads, target_sequence_length, query_dimension // number_of_heads)
+    #K = K.view(batch_size, number_of_heads, source_sequence_length, query_dimension // number_of_heads)
+    #V = V.view(batch_size, number_of_heads, source_sequence_length, value_dimension // number_of_heads)
 
-    ...
+    #return Q, K, V
+
+
+
