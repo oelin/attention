@@ -79,3 +79,24 @@ def multi_head_attention(
     value = value @ W0.T  
 
     return value, score
+
+
+
+# ED = 15  # embedding dim
+# QD = 15  # query dim
+# KD = 15  # key dim
+# VD = 25  # value dim
+# B = 4    # batch size
+# T = 10   # target length
+# S = 20   # source length
+# N = 3    # number of heads
+
+# Q = torch.randn(B, T, QD)
+# K = torch.randn(B, S, KD)
+# V = torch.randn(B, S, VD)
+# WQ = torch.randn(ED, QD)
+# WK = torch.randn(ED, KD)
+# WV = torch.randn(ED, VD)
+# W0 = torch.randn(ED, ED)
+# mask = torch.ones((T, S))
+# value, score = multi_head_attention(Q, K, V, WQ, WK, WV, W0, mask, ED, N)
