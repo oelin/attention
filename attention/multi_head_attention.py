@@ -55,31 +55,28 @@ def multi_head_attention(
     VD - value dimension.
     HD - head dimension.
     ED - embedding dimension.
-    N - number of heads (must divide ED).
     """
-    
-    batch_size, target_sequence_length, query_dimension = Q.size()
-    batch_size, source_sequence_length, key_dimension = K.size()
-    batch_size, source_sequence_length, value_dimension = V.size()
+
+    head_dimension = embedding_dimension // number_of_heads
+    target_sequence_length = Q.size(1)
+    source_sequence_length = K.size(1)
 
     Q = Q @ WQ.T  
     K = K @ WK.T
     V = V @ WV.T
 
-    Q = Q.view(batch_size, number_of_heads, target_sequence_length, embedding_dimension // number_of_heads)
-    K = K.view(batch_size, number_of_heads, source_sequence_length, embedding_dimension // number_of_heads)
-    V = V.view(batch_size, number_of_heads, source_sequence_length, embedding_dimension // number_of_heads)
+    Q = Q.view(-1, number_of_heads, target_sequence_length, head_dimension)
+    K = K.view(-1, number_of_heads, source_sequence_length, head_dimension)
+    V = V.view(-1, number_of_heads, source_sequence_length, head_dimension)
 
     value, score = scaled_dot_product_attention(Q, K, V, mask)
 
+    # Concatenate heads.
+
+    value = value.permute(2, 0, 1, 3)
+    value = value.contiguous()
+    value = value.transpose(0, 1)
+    value = value.view(-1, target_sequence_length, embedding_dimension)
+    value = value @ W0.T  
+
     return value, score
-
-
-    #Q = Q.view(batch_size, number_of_heads, target_sequence_length, query_dimension // number_of_heads)
-    #K = K.view(batch_size, number_of_heads, source_sequence_length, query_dimension // number_of_heads)
-    #V = V.view(batch_size, number_of_heads, source_sequence_length, value_dimension // number_of_heads)
-
-    #return Q, K, V
-
-
-
