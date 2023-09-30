@@ -20,8 +20,8 @@ def scaled_dot_product_attention(
     value: torch.Tensor - attention value of shape (B, T, VD).
     score: torch.Tensor - attention score of shape (T, S).
 
-    Example
-    -------
+    Examples
+    --------
 
     >>> Q = torch.randn(5, 10, 15)
     >>> K = torch.randn(5, 20, 15)
