@@ -39,11 +39,13 @@ class SlowMultiHeadAttention(nn.Module):
 
     def forward(
         self, 
-        x: torch.Tensor, 
+        query: torch.Tensor, 
+        key: torch.Tensor,
+        value: torch.Tensor,
         mask: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
 
-        x = torch.cat([head(x, mask) for head in self.heads], dim=-1)
+        x = torch.cat([head(query, key, value, mask) for head in self.heads], dim=-1)
         x = self.linear_output(x)
 
         return x
