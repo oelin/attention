@@ -63,23 +63,25 @@ def scaled_dot_product_attention(
 class ScaledDotProductAttention(nn.Modlue):
     """Scaled Dot-product Attention."""
 
-    def __init__(self, query_dimension: int, value_dimension: int) -> None:
+    def __init__(self, embedding_dimension: int, query_dimension: int, value_dimension: int) -> None:
         super().__init__()
 
-        self.linear_query = nn.LazyLinear(query_dimension)
-        self.linear_key = nn.LazyLinear(query_dimension)
-        self.linear_value = nn.LazyLinear(value_dimension)
+        self.linear_query = nn.Linear(embedding_dimension, query_dimension, bias=False)
+        self.linear_key = nn.LazyLinear(embedding_dimension, query_dimension, bias=False)
+        self.linear_value = nn.LazyLinear(embedding_dimension, value_dimension, bias=False)
     
     def forward(
-        x: torch.Tensor,
+        query: torch.Tensor,
+        key: torch.Tensor,
+        value: torch.Tensor,
         mask: Optional[torch.Tensor] = None, 
         dropout_probability: float = 0.0, 
         is_causal: bool = False,
     ) -> torch.Tensor:
 
-        query = self.linear_query(x)
-        key = self.linear_key(x)
-        value = self.linear_value(x)
+        query = self.linear_query(query)
+        key = self.linear_key(key)
+        value = self.linear_value(value)
 
         return scaled_dot_product_attention(
             query, 
