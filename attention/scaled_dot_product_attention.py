@@ -1,93 +1,49 @@
-"""Scaled Dot-product Attention.
-
-This implementation is based on PyTorch's `scaled_dot_product_attention` 
-function, which takes in precomputed query, key and value tensors as well as 
-an optional mask tensor. If `is_causal` is true, then a causal maks is used.
-
-See: https://pytorch.org/docs/stable/generated/torch.nn.functional.scaled_dot_product_attention.html
-See: https://paperswithcode.com/method/scaled
-"""
-
-from typing import Optional
-from packaging import version
-
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-
-
 def scaled_dot_product_attention(
-    query: torch.Tensor, 
-    key: torch.Tensor, 
-    value: torch.Tensor, 
-    mask: Optional[torch.Tensor] = None, 
-    dropout_probability: float = 0.0, 
-    is_causal: bool = False,
-) -> torch.Tensor:
-    """Scaled Dot-product Attention."""
+    Q: torch.Tensor, 
+    K: torch.Tensor, 
+    V: torch.Tensor, 
+    mask: torch.Tensor,
+) -> Tuple[torch.Tensor, torch.Tensor]:
+    """Scaled dot-product attention.
 
-    query_batch_size, query_sequence_length, query_dimension = query.size()
-    key_batch_size, key_sequence_length, key_dimension = query.size()
-    value_batch_size, value_sequence_length, value_dimension = value.size()
+    Parameters
+    ----------
 
-    # Checks (can be omitted).
+    Q: torch.Tensor - Query tensor of shape (B, T, QD).
+    K: torch.Tensor - Key tensor of shape (B, S, QD).
+    V: torch.Tensor - Value tensor of shape (B, S, VD).
+    mask: torch.Tensor - Mask tensor of shape (T, S).
 
-    assert query_batch_size == key_batch_size
-    assert query_batch_size == value_batch_size
+    Returns
+    -------
 
-    if mask is not None:        
-        mask_query_sequence_length, mask_key_sequence_length = mask.size()
-        
-        assert not is_causal
-        assert query_sequence_length == mask_query_sequence_length
-        assert key_sequence_length == mask_key_sequence_length
+    value: torch.Tensor - attention value of shape (B, T, VD).
+    score: torch.Tensor - attention score of shape (T, S).
 
-    assert key_sequence_length == value_sequence_length
-    assert query_dimension == key_dimension
+    Example
+    -------
 
-    # Computation.
+    >>> Q = torch.randn(5, 10, 15)
+    >>> K = torch.randn(5, 20, 15)
+    >>> V = torch.randn(5, 20, 25)
+    >>> mask = torch.ones((10, 20))
+    >>> score, value = scaled_dot_product_attention(Q, K, V, mask) 
 
-    if is_causal:
-        mask = torch.ones(query_sequence_length, key_sequence_length, dtype=torch.float).tril(diagonal=0)
-        mask = mask.masked_fill(mask == 0, -torch.inf)
+    Aliases
+    -------
 
-    score = query @ key.transpose(-2, -1)
-    score = score / math.sqrt(query_dimension)
+    B - batch size.
+    T - target sequence length.
+    S - source sequence length.
+    QD - query dimension.
+    VD - value dimension.
+    """
+
+    mask = mask.masked_fill(mask == 0, -torch.inf)
+    score = Q @ K.transpose(-2, -1)
+    score = score / math.sqrt(Q.size(-1))
     score = score + mask
     score = torch.softmax(score, dim=-1)
-    output = score @ V
-    
-    return output
-    
+    value = score @ V
 
-class ScaledDotProductAttention(nn.Modlue):
-    """Scaled Dot-product Attention."""
-
-    def __init__(self, embedding_dimension: int, query_dimension: int, value_dimension: int) -> None:
-        super().__init__()
-
-        self.linear_query = nn.Linear(embedding_dimension, query_dimension, bias=False)
-        self.linear_key = nn.LazyLinear(embedding_dimension, query_dimension, bias=False)
-        self.linear_value = nn.LazyLinear(embedding_dimension, value_dimension, bias=False)
-    
-    def forward(
-        query: torch.Tensor,
-        key: torch.Tensor,
-        value: torch.Tensor,
-        mask: Optional[torch.Tensor] = None, 
-        dropout_probability: float = 0.0, 
-        is_causal: bool = False,
-    ) -> torch.Tensor:
-
-        query = self.linear_query(query)
-        key = self.linear_key(key)
-        value = self.linear_value(value)
-
-        return scaled_dot_product_attention(
-            query, 
-            key,
-            value,
-            mask, 
-            dropout_probability, 
-            is_causal,
-        )
+    return value, score
