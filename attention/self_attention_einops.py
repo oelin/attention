@@ -36,10 +36,8 @@ class Attention(nn.Module):
         """Forward pass."""
 
         q, k, v = rearrange(self.linear_1(x), 'b s (k h e) -> k b h s e', k=3, h=self.number_of_heads)
-
         score = torch.einsum('bhxe,bhye->bhxy', q, k)
         score = F.softmax((score / math.sqrt(k.size(-1))) + mask, dim=-1)
-
         x = rearrange(score @ v, 'b h s e -> b s (h e)')
 
         return x
