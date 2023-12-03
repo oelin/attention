@@ -1,15 +1,13 @@
-"""Attention with relative position bias. Simliar to T5, however without chunking."""
-
 class AttentionWithRelativePositionBias(nn.Module):
 
-    def __init__(self, embedding_dimension: int, number_of_heads: int, maximum_sequence_length: int) -> None:
+    def __init__(self, embedding_dimension: int, number_of_heads: int, maximum_sequence_length: int, share_across_heads: bool = True) -> None:
 
         super().__init__()
 
         self.number_of_heads = number_of_heads
         self.linear_qkv = nn.Linear(in_features=embedding_dimension, out_features=embedding_dimension * 3, bias=False)
         self.linear_out = nn.Linear(in_features=embedding_dimension, out_features=embedding_dimension, bias=False)
-        self.relative_position_bias = nn.Parameter(1e-3 * torch.randn((number_of_heads, maximum_sequence_length, maximum_sequence_length)))  # One relative position matrix per head.
+        self.relative_position_bias = nn.Parameter(1e-3 * torch.randn((int(share_across_heads) or number_of_heads, maximum_sequence_length, maximum_sequence_length)))
 
     def forward(self, x: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
 
