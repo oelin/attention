@@ -15,7 +15,7 @@ class AttentionWithLinearBias(nn.Module):
         q, k, v = rearrange(self.linear_qkv(x), 'b s (k h e) -> k b h s e', k=3, h=self.number_of_heads)
 
         sequence_length = q.size(-2)
-        bias = torch.tril(torch.arange(sequence_length) - torch.arange(sequence_length).unsqueeze(1)).cuda()
+        bias = torch.tril(torch.arange(sequence_length) - torch.arange(sequence_length).unsqueeze(1))
 
         score = torch.einsum('bsqe,bske->bsqk', q, k)
         score = F.softmax((score + bias)/math.sqrt(k.size(1)) + mask, dim=-1)
