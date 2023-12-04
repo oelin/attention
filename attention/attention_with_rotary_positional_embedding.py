@@ -34,7 +34,7 @@ class AttentionWithRotaryPositionalEmbedding(nn.Module):
     def forward(self, x: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
 
         q, k, v = rearrange(self.linear_qkv(x), 'b s (k h e) -> k b h s e', k=3, h=self.number_of_heads)
-        position = torch.arange(q.size(-2)).cuda()
+        position = torch.arange(q.size(-2))
 
         q = self.rotary.rotate(q, position)
         k = self.rotary.rotate(k, position)
